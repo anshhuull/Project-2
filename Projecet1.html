@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selling Page</title>
+</head>
+<body>
+  <h1>Selling Page</h1>
+
+  <form id="itemForm">
+    <label for="itemName">Item Name:</label>
+    <input type="text" id="itemName" required><br>
+
+    <label for="itemPrice">Item Price:</label>
+    <input type="number" id="itemPrice" step="0.01" required><br>
+
+    <label for="category">Category:</label>
+    <select id="category">
+      <option value="food">Food</option>
+      <option value="electronics">Electronics</option>
+      <option value="skincare">Skincare</option>
+    </select><br>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="itemList">
+    <h2>Available Items</h2>
+    <ul id="itemListUl"></ul>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    const itemForm = document.getElementById('itemForm');
+    const itemListUl = document.getElementById('itemListUl');
+    const apiUrl="https://crudcrud.com/api/6b5e6ba2274640a7bf09198218eb8133/items"
+
+    async function fetchItems() {
+      try {
+        const response = await axios.get(`${apiUrl}`);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching items:', error);
+        return [];
+      }
+    }
+
+    async function showItemsOnScreen() {
+      itemListUl.innerHTML = '';
+
+      const items = await fetchItems();
+
+      items.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <strong>Name:</strong> ${item.name}<br>
+          <strong>Price:</strong> $${item.price.toFixed(2)}<br>
+          <strong>Category:</strong> ${item.category}<br>
+          <button onclick="deleteItem('${item.id}')">Delete</button><br>
+          <hr>
+        `;
+        itemListUl.appendChild(li);
+      });
+    }
+
+    async function createItem(name, price, category) {
+      try {
+        const response = await axios.post(`${apiUrl}`, {
+          name,
+          price,
+          category
+        });
+        return response.data;
+      } catch (error) {
+        console.error('Error creating item:', error);
+        return null;
+      }
+    }
+
+    async function deleteItem(itemId) {
+      try {
+        await axios.delete(`${apiUrl}/${itemId}`);
+        showItemsOnScreen();
+      } catch (error) {
+        console.error('Error deleting item:', error);
+      }
+    }
+
+    itemForm.addEventListener('submit', async event => {
+      event.preventDefault();
+
+      const itemName = document.getElementById('itemName').value;
+      const itemPrice = parseFloat(document.getElementById('itemPrice').value);
+      const category = document.getElementById('category').value;
+
+      const newItem = await createItem(itemName, itemPrice, category);
+
+      if (newItem) {
+        showItemsOnScreen();
+      }
+    });
+
+    // Load existing item data from the server on page load
+    showItemsOnScreen();
+  </script>
+</body>
+</html>
